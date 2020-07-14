@@ -1,5 +1,5 @@
 id,Title,Name,Domain,BreachDate,AddedDate,ModifiedDate,PwnCount,DataClasses,IsVerified,IsFabricated,IsSensitive,IsActive,IsRetired,IsSpamList,LogoType
-135664815,River City Media Spam List,RiverCityMedia,rivercitymediaonline.com,1/1/2017,2017-03-08T23:49:53Z,2017-03-08T23:49:53Z,393430309,"Email addresses, IP addresses, Names, Physical addresses",TRUE,FALSE,FALSE,TRUE,FALSE,TRUE,png
+135664815,River City Media Spam List,RiverCityMedia,rivercitymediaonline.com,1/1/2017,2017-03-08T23:49:53Z,2017-03-08T23:49:53Z,393430309,"Email addresses, IP addresses, Names, Physical address",TRUE,FALSE,FALSE,TRUE,FALSE,TRUE,png
 355286483,Bitcoin Security Forum Gmail Dump,BTSec,forum.btcsec.com,1/9/2014,2014-09-10T20:30:11Z,2014-09-10T20:30:11Z,4789599,"Email addresses, Passwords",TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,svg
 355286483,River City Media Spam List,RiverCityMedia,rivercitymediaonline.com,1/1/2017,2017-03-08T23:49:53Z,2017-03-08T23:49:53Z,393430309,"Email addresses, IP addresses, Names, Physical addresses",TRUE,FALSE,FALSE,TRUE,FALSE,TRUE,png
 355286483,MySpace,MySpace,myspace.com,7/1/2008,2016-05-31T00:12:29Z,2016-05-31T00:12:29Z,359420698,"Email addresses, Passwords, Usernames",TRUE,FALSE,FALSE,TRUE,FALSE,FALSE,svg
