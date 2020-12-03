@@ -1,0 +1,281 @@
+---
+title: "R Notebook"
+output:
+  word_document: default
+  html_notebook: default
+---
+```{r}
+# load library
+library(tidyverse)
+library(ggplot2)
+library(splines)
+library(stargazer)
+library(xtable)
+library(knitr)
+library(kableExtra)
+```
+
+
+```{r}
+org_ds <- read.csv("https://raw.githubusercontent.com/themains/pwned/master/data/YGOV1058_profile.csv")
+brch_ds <- read.csv("https://raw.githubusercontent.com/themains/pwned/master/data/YGOV1058_pwned.csv")
+
+# join both the data set
+final_ds <- org_ds %>% left_join(brch_ds,by = "id")
+
+```
+
+```{r}
+
+# Create a vector of 1/0 using NAs from join so that NA is 0 and else is 1
+sum(is.na(brch_ds$PwnCount))
+final_ds$pwn <- ifelse(is.na(final_ds$PwnCount), 0, 1)
+
+```
+## By Gender
+```{r}
+
+## Recoding
+
+final_ds$gender <- car::recode(final_ds$gender, "1 = 'Male';
+                                             2 = 'Female'",
+                                             as.factor = T, 
+                                             levels = c("Female", "Male"))
+# Group by gender
+final_gender <- final_ds %>%
+    group_by(id, gender) %>%
+    summarize(total_pwn = sum(pwn)) %>%
+    group_by(gender) %>%
+    summarize(mean= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+
+final_gender
+
+
+ggplot(final_gender, aes(x = gender, y = mean)) + 
+  geom_point(stat = "identity", color = "red") +
+  geom_errorbar(aes(ymin = mean - 1.96*se, ymax = mean + 1.96*se), width = .05, color = "blue",position = position_dodge(10) ) + 
+  ylab("Average Number of Accounts Breached") +
+  xlab("") +
+  theme_classic() +
+  coord_flip()
+
+
+ggplot(final_gender, aes(x = gender, y = mean), fill=gender) +
+geom_bar(width =0.2,stat = "identity",color="yellow",fill="blue")+
+  theme_light()
+  
+
+```
+# By Race
+```{r}
+# Recoding 
+final_ds$race <- car::recode(final_ds$race, "1 = 'White';
+                                             2 = 'Black';
+                                             3 = 'Hispanic/Latino'; 
+                                             4 = 'Asian'; 
+                                             5 = 'Native American'; 
+                                             6 = 'Middle Eastern';
+                                             7 = 'Mixed Race'; 
+                                             8 = 'Other'",
+                                            as.factor = T,
+                                           levels = c("White", "Black", "Hispanic/Latino", "Asian", "Native American", "Middle Eastern", "Mixed  Race", "Other"))
+
+# Group by Race
+
+final_race <- final_ds %>%
+    group_by(id,race) %>%
+    summarize(total_pwn = sum(pwn)) %>%
+    group_by(race) %>%
+    summarize(mean_race= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+    final_race
+    
+# ggplot
+    
+  ggplot(final_race, aes(x = race, y = mean_race), fill=race) +
+geom_bar(width =0.5,stat = "identity",color="yellow",fill="lightpink")+
+  labs(y = "Average Number of Accounts Breached", 
+       x="", 
+       title = "Relationship Between Race and Number of Breaches")+
+    geom_text(aes(label=mean_race), vjust=1.5, color="black", size=3.5)+
+    theme(axis.text.x = element_text(angle = 45, 
+                                   hjust = 1))
+    
+```
+## By Education
+```{r}
+final_ds$educ <- car::recode(final_ds$educ, "1 = 'No HS';
+                                             2 = 'HS Grad.';
+                                             3 = 'Some College'; 
+                                             4 = '2-year College Degree'; 
+                                             5 = '4-year College Degree'; 
+                                             6 = 'Postgrad Degree'",
+                                             as.factor = T, 
+                                             levels = c("No HS", "HS Grad.", "Some College", "2-year College Degree", "4-year College Degree", "Postgrad Degree"))
+
+# Group by Education
+
+final_edu <- final_ds %>%
+    group_by(id,educ) %>%
+    summarize(total_pwn = sum(pwn)) %>%
+    group_by(educ) %>%
+    summarize(mean_edu= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+    final_edu
+# ggplot 
+ggplot(final_edu, aes(x = educ, y = mean_edu), fill=educ) +
+geom_bar(width =0.5,stat = "identity",color="yellow",fill="lightblue")+
+  labs(y = "Average Number of Accounts Breached", 
+       x = "", 
+       title = "Relationship Between Education and Number of Breaches")+
+  geom_text(aes(label=mean_edu), vjust=1.1, color="black", size=3.5,hjust=2.5)+
+  theme_grey()+
+   coord_flip()
+```
+## By Age
+```{r}
+final_ds$age = 2019 - final_ds$birthyr
+final_ds$agecat = cut(final_ds$age, breaks = c(18, 25, 35, 50, 65, 100), right = T, ordered_result = T)
+
+
+final_age <- final_ds %>%
+     group_by(id,agecat) %>%
+     summarize(total_pwn = sum(pwn)) %>%
+     group_by(agecat) %>%
+    summarize(mean_age = round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+final_age
+##GGplot
+
+ggplot(final_age,aes(x = agecat, y = mean_age)) + 
+      geom_bar(width =0.5,stat = "identity",color="Red",fill="pink")+
+      labs(y = "Age Range", 
+       x = "", 
+       title = "Number of Breaches By Age")+
+      geom_text(aes(label=mean_age), vjust=1.1, color="black", size=3.5,hjust=2.5)+
+      theme_linedraw()+
+      coord_flip()
+
+
+```
+```{r}
+final_domain1 <- final_ds %>%
+    group_by(Domain) %>%
+    summarize(n = sum(pwn)) 
+df <-final_domain1[order(-final_domain1$n),]
+df1 <- head(df,8)
+ ## Ggplot 2
+  ggplot(data = df1, aes(Domain, n)) +
+  geom_histogram(stat ="identity",fill = "lightblue", color = "blue")+
+  geom_text(aes(label=n), vjust=1.1, color="black", size=3.5,hjust=2.5)+
+  theme_bw()+
+  coord_flip()
+
+```
+```{r}
+fin_small_dat <- subset(final_ds, (is.na(IsVerified) | IsVerified == T) & (is.na(IsSpamList) | IsSpamList == F))
+head(fin_small_dat)
+counts <- fin_small_dat %>%
+    group_by(id, gender) %>%
+    summarize(n = sum(pwn)) %>%
+    group_by(gender) %>%
+    summarize(n = mean(n))
+print(counts)
+```
+```{r, results='asis'}
+## ID level pwn
+pwn_id <- final_ds[, c('id', 'pwn')] %>% 
+   group_by(id) %>%
+   summarize(total_pwn = sum(pwn))
+
+# Inner join to profile
+fin_id_dat <- pwn_id %>%
+    inner_join(final_ds)
+
+# Unique
+fin_id_dat <- fin_id_dat[!duplicated(fin_id_dat$id), ]
+
+# Means and s.e. by race, sex, age, and education
+
+## Recoding
+
+fin_id_dat$educ <- car::recode(fin_id_dat$educ, "1 = 'No HS';
+                                             2 = 'HS Grad.';
+                                             3 = 'Some College'; 
+                                             4 = '2-year College Degree'; 
+                                             5 = '4-year College Degree'; 
+                                             6 = 'Postgrad Degree'",
+                                             as.factor = T, 
+                                             levels = c("No HS", "HS Grad.", "Some College", "2-year College Degree", "4-year College Degree", "Postgrad Degree"))
+
+fin_id_dat$race <- car::recode(fin_id_dat$race, "1 = 'White';
+                                             2 = 'Black';
+                                             3 = 'Hispanic/Latino'; 
+                                             4 = 'Asian'; 
+                                             5 = 'Native American'; 
+                                             6 = 'Middle Eastern';
+                                             7 = 'Mixed Race'; 
+                                             8 = 'Other'",
+                                             as.factor = T, 
+                                             levels = c("White", "Black", "Hispanic/Latino", "Asian", "Native American", "Middle Eastern", "Mixed Race", "Other"))
+
+fin_id_dat$gender <- car::recode(fin_id_dat$gender, "1 = 'Male';
+                                             2 = 'Female'",
+                                             as.factor = T, 
+                                             levels = c("Female", "Male"))
+
+fin_id_educ <- fin_id_dat %>%
+    group_by(educ) %>%
+    summarize(mean= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+
+fin_id_race <- fin_id_dat %>%
+    group_by(race) %>%
+     summarize(mean= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+
+fin_id_sex <- fin_id_dat %>%
+    group_by(gender) %>%
+    summarize(mean= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+fin_id_sex
+# Recode Age
+fin_id_dat$age = 2018 - fin_id_dat$birthyr
+fin_id_dat$agecat = cut(fin_id_dat$age, breaks = c(18, 25, 35, 50, 65, 100), right = T, ordered_result = T)
+
+fin_id_age <- fin_id_dat %>%
+    group_by(agecat) %>%
+     summarize(mean= round(mean(total_pwn),2), se = round(sd(total_pwn)/sqrt(n()),2))
+
+## Output a Table
+fin_res <- data.frame("Sociodemographics" = NA, mean = NA, se = NA)
+fin_res[1, 1] <- "Age"
+fin_res[1,2:3]<- "--"
+fin_res[2:(nrow(fin_id_age) + 1), 1] <- as.character(fin_id_age$agecat)
+fin_res[2:(nrow(fin_id_age) + 1), 2:3] <- fin_id_age[, 2:3]
+fin_res[7, 1] <- "Missing"
+fin_res[8, 1] <- "--"
+fin_res[8, 2:3] <- "--"
+
+fin_res[9, 1] <- "Education"
+fin_res[9,2:3]<- "--"
+fin_res[10:(nrow(fin_id_educ) + 9), 1] <- as.character(fin_id_educ$educ)
+fin_res[10:(nrow(fin_id_educ) + 9), 2:3] <- fin_id_educ[, 2:3]
+fin_res[16, 1] <- "--"
+fin_res[16, 2:3] <- "--"
+fin_res[17, 1] <- "Sex"
+fin_res[17,2:3]<- "--"
+fin_res[18:(nrow(fin_id_sex) + 17), 1] <- as.character(fin_id_sex$gender)
+fin_res[18:(nrow(fin_id_sex) + 17), 2:3] <- fin_id_sex[, 2:3]
+fin_res[20, 1] <- "--"
+fin_res[20, 2:3] <- "--"
+fin_res[21, 1] <- "Race"
+fin_res[21,2:3]<- "--"
+fin_res[22:(nrow(fin_id_race) + 21), 1] <- as.character(fin_id_race$race)
+fin_res[22:(nrow(fin_id_race) + 21), 2:3] <- fin_id_race[, 2:3]
+
+names(fin_res)[1] <- ""
+
+#print(xtable(fin_res), type="html")
+#print(xtable(fin_res),type="html", include.rownames=T, include.colnames=T,booktabs =T)
+kable(fin_res) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+
+
